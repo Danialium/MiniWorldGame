@@ -17,14 +17,13 @@ Core::Core()
         print_error("Core", "is_windowSizeChanged", " Exiting");
         exit(EXIT_FAILURE);
     }
-    texture_library["grass"];
 
-    if(!load_Tile("../../assets/tile/grass.bmp", texture_library["grass"]))
+    animation_library["grass"];
+    if(!load_animation("../../assets/tile/grass", animation_library["grass"], "grass", 4, 1000))
     {
-        print_error("Core", "load_Tile", " Exiting");
+        print_error("Core", "load_animation", " Exiting");
         exit(EXIT_FAILURE);
-    }
-    
+    }   
 }
 
 Core::~Core()
@@ -64,7 +63,8 @@ bool Core::init()
 void Core::window_handler()
 {
     //color_seed = get_random_seed();
-    tile_seed = get_random_texture();
+    // tile_seed = get_random_texture();
+    tile_anim_seed = get_random_animation();
     SDL_Event event;
 
     while (1) 
@@ -82,8 +82,10 @@ void Core::window_handler()
         {
             std::cout << "color seed has been changed " << '\n';
             //color_seed = get_random_seed();   
-            tile_seed = get_random_texture();
+            // tile_seed = get_random_texture();
+            tile_anim_seed = get_random_animation();
         }
+
         create_random_mesh(window, renderer);
         SDL_RenderPresent(renderer);
     }
@@ -98,13 +100,40 @@ bool Core::deinit()
     return true;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Core::print_error(std::string base_function, std::string inner_function, std::string comment)
+bool Core::create_random_mesh(SDL_Window* window, SDL_Renderer* renderer)
 {
-    std::cout << "[E] " << base_function << " :: " << inner_function << " -> " << comment << '\n';
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);  
+    SDL_RenderClear(renderer);
+
+    int block_w = floor(window_w / (double)WORLD_SIZE), 
+        block_h = floor(window_h / (double)WORLD_SIZE);
+
+    for (int x = 0; x < WORLD_SIZE; x++)
+    {
+        for (int y = 0; y < WORLD_SIZE; y++)
+        {
+            SDL_FRect th_block = {x * block_w, y * block_h, block_w, block_h}; //x, y, w, h
+                        
+            // if(!create_single_block(renderer, th_block, color_seed[x][y]))
+            //     std::cout << "skip " <<  x << "," << y << '\n';
+
+            // if(!create_single_block(th_block, tile_seed[x][y]))
+            //     std::cout << "skip " <<  x << "," << y << '\n';
+
+            if(!create_single_block(th_block, tile_anim_seed[x][y]))
+                std::cout << "skip " <<  x << "," << y << '\n';
+        }
+    }
+    
+    return true;
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////          Color             //////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool Core::create_single_block(SDL_Renderer* renderer, SDL_FRect block, ColorPack colors)
 {
@@ -126,19 +155,6 @@ bool Core::create_single_block(SDL_Renderer* renderer, SDL_FRect block, ColorPac
     return true;
 }
 
-bool Core::create_single_block(SDL_FRect block, Tile tile)
-{
-    if(0)//set error for wrong size 
-        return false;
-
-    if(!SDL_RenderTexture(renderer, tile.texture, NULL, &block))
-    {
-        print_error("create_single_block", "SDL_RenderTexture", SDL_GetError());
-        return false;
-    }
-
-}
-
 std::vector<std::vector<ColorPack>> Core::get_random_seed()
 {
     std::vector<std::vector<ColorPack>> output_seed(WORLD_SIZE, std::vector<ColorPack>(WORLD_SIZE));
@@ -154,67 +170,23 @@ std::vector<std::vector<ColorPack>> Core::get_random_seed()
     return output_seed;
 }
 
-std::vector<std::vector<Tile>> Core::get_random_texture()
+/////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////         Texture            //////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool Core::create_single_block(SDL_FRect block, Tile & tile)
 {
-    std::vector<std::vector<Tile>> output_seed(WORLD_SIZE, std::vector<Tile>(WORLD_SIZE));
-    for (int x = 0; x < WORLD_SIZE; x++)
+    if(0)//set error for wrong size 
+        return false;
+
+    if(!SDL_RenderTexture(renderer, tile.texture, NULL, &block))
     {
-        for (int y = 0; y < WORLD_SIZE; y++)
-        {
-            output_seed[x][y] = texture_library["grass"];
-        }
+        print_error("create_single_block", "SDL_RenderTexture", SDL_GetError());
+        return false;
     }
 
-    return output_seed;
-}
-
-bool Core::create_random_mesh(SDL_Window* window, SDL_Renderer* renderer)
-{
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);  
-    SDL_RenderClear(renderer);
-
-    int block_w = floor(window_w / (double)WORLD_SIZE), 
-        block_h = floor(window_h / (double)WORLD_SIZE);
-
-    for (int x = 0; x < WORLD_SIZE; x++)
-    {
-        for (int y = 0; y < WORLD_SIZE; y++)
-        {
-            SDL_FRect th_block = {x * block_w, y * block_h, block_w, block_h}; //x, y, w, h
-                        
-            // if(!create_single_block(renderer, th_block, color_seed[x][y]))
-            //     std::cout << "skip " <<  x << "," << y << '\n';
-
-            if(!create_single_block(th_block, tile_seed[x][y]))
-                std::cout << "skip " <<  x << "," << y << '\n';
-        }
-    }
-    
     return true;
 }
-
-bool Core::is_windowSizeChanged(SDL_Window* window)
-{
-    int th_w = 0, th_h = 0;
-    if(!SDL_GetWindowSize(window, &th_w, &th_h))
-    {
-        print_error("main", "SDL_GetWindowSize", " .... ");
-        exit(EXIT_FAILURE);
-    }
-
-    bool ret = false;
-    if(window_w != th_w || window_h != th_h)
-    {
-        ret = true;
-        window_w = th_w;
-        window_h = th_h;
-    }
-
-    return ret;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////
 
 bool Core::load_Tile(const char* path, Tile & tile)
 {
@@ -241,8 +213,121 @@ bool Core::load_Tile(const char* path, Tile & tile)
     return true;
 }
 
-bool Core::load_tile_library()
+std::vector<std::vector<Tile>> Core::get_random_texture()
 {
-    
+    std::vector<std::vector<Tile>> output_seed(WORLD_SIZE, std::vector<Tile>(WORLD_SIZE));
+    for (int x = 0; x < WORLD_SIZE; x++)
+    {
+        for (int y = 0; y < WORLD_SIZE; y++)
+        {
+            output_seed[x][y] = texture_library["grass"];
+        }
+    }
+
+    return output_seed;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////        ANIMATION           //////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool Core::create_single_block(SDL_FRect block, TileAnim & anim)
+{
+    if(0)//set error for wrong size 
+        return false;
+
+    if(!SDL_RenderTexture(renderer, anim.anim[anim.id], NULL, &block))
+    {
+        print_error("create_single_block", "SDL_RenderTexture", SDL_GetError());
+        return false;
+    }
+
+    anim.duration_id++;
+    if(anim.duration_id % anim.duration == anim.duration - 1)
+        anim.id = (anim.id + 1) % anim.anim_count;
+
     return true;
 }
+
+bool Core::load_animation(const char* path, TileAnim & anim, std::string key, int count, int duration)
+{
+    anim.anim_count = count;
+    anim.duration = duration;
+    anim.anim.resize(count);
+    for (int i = 0; i < count; i++)
+    {
+        SDL_Surface *surface = NULL;
+        std::string image_path = (std::string)path + (std::string)"/" + key + "_" + std::to_string(i) + ".bmp";
+        std::cout << image_path << '\n';
+        surface = SDL_LoadBMP(image_path.c_str());
+        if (!surface)
+        {
+            SDL_Log("Couldn't load bitmap: %s", SDL_GetError());
+            return false;
+        }
+
+        anim.width = surface->w;
+        anim.height = surface->h;
+
+        anim.anim[i] = SDL_CreateTextureFromSurface(renderer, surface);
+        if (!anim.anim[i]) 
+        {
+            SDL_Log("Couldn't create static texture: %s", SDL_GetError());
+            return false;
+        }
+
+        SDL_DestroySurface(surface);  /* done with this, the texture has a copy of the pixels now. */
+    }
+    
+}
+
+std::vector<std::vector<TileAnim>> Core::get_random_animation()
+{
+    std::vector<std::vector<TileAnim>> output_seed(WORLD_SIZE, std::vector<TileAnim>(WORLD_SIZE));
+    for (int x = 0; x < WORLD_SIZE; x++)
+    {
+        for (int y = 0; y < WORLD_SIZE; y++)
+        {
+            output_seed[x][y] = animation_library["grass"];
+            output_seed[x][y].id = rand() % output_seed[x][y].anim_count;
+        }
+    }
+
+    return output_seed;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////            ETC             //////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Core::print_error(std::string base_function, std::string inner_function, std::string comment)
+{
+    std::cout << "[E] " << base_function << " :: " << inner_function << " -> " << comment << '\n';
+}
+
+bool Core::load_tile_library()
+{
+
+    return true;
+}
+
+bool Core::is_windowSizeChanged(SDL_Window* window)
+{
+    int th_w = 0, th_h = 0;
+    if(!SDL_GetWindowSize(window, &th_w, &th_h))
+    {
+        print_error("main", "SDL_GetWindowSize", " .... ");
+        exit(EXIT_FAILURE);
+    }
+
+    bool ret = false;
+    if(window_w != th_w || window_h != th_h)
+    {
+        ret = true;
+        window_w = th_w;
+        window_h = th_h;
+    }
+
+    return ret;
+}
+

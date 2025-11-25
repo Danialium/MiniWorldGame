@@ -11,16 +11,20 @@ struct Tile
 struct TileAnim
 {
     std::vector<SDL_Texture*> anim;
+    int anim_count;
+
     int width, height;
+    
     int id;
     int duration;
-    long long duration_id;
-    int anim_count;
+    Uint64 lastUpdate;
 };
 
 class Core
 {
 private: 
+    Uint64 freq, crntCounter;
+
     int window_w, window_h;
     std::vector<std::vector<ColorPack>> color_seed;
     std::vector<std::vector<Tile>> tile_seed;

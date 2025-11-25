@@ -6,6 +6,8 @@ Core::Core()
     renderer = nullptr;
     window_w = window_h = 0;
 
+    freq = SDL_GetPerformanceFrequency();
+
     if(!init())
     {
         print_error("Core", "init", " Exiting");
@@ -242,9 +244,12 @@ bool Core::create_single_block(SDL_FRect block, TileAnim & anim)
         return false;
     }
 
-    anim.duration_id++;
-    if(anim.duration_id % anim.duration == anim.duration - 1)
+    crntCounter = SDL_GetPerformanceCounter();
+    if(((crntCounter - anim.lastUpdate) * 1000) / freq >= anim.duration) //ms
+    {
+        anim.lastUpdate = crntCounter;
         anim.id = (anim.id + 1) % anim.anim_count;
+    }      
 
     return true;
 }
@@ -258,7 +263,7 @@ bool Core::load_animation(const char* path, TileAnim & anim, std::string key, in
     {
         SDL_Surface *surface = NULL;
         std::string image_path = (std::string)path + (std::string)"/" + key + "_" + std::to_string(i) + ".bmp";
-        std::cout << image_path << '\n';
+
         surface = SDL_LoadBMP(image_path.c_str());
         if (!surface)
         {
@@ -275,6 +280,8 @@ bool Core::load_animation(const char* path, TileAnim & anim, std::string key, in
             SDL_Log("Couldn't create static texture: %s", SDL_GetError());
             return false;
         }
+
+        anim.lastUpdate = SDL_GetPerformanceCounter();
 
         SDL_DestroySurface(surface);  /* done with this, the texture has a copy of the pixels now. */
     }

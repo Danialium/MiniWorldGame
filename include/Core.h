@@ -2,6 +2,8 @@
 
 #include "Constant.h"
 #include <SDL3/SDL.h>
+#include <toml++/toml.hpp>
+
 struct Tile
 {
     SDL_Texture* texture;
@@ -53,7 +55,7 @@ private:
     bool create_single_block(SDL_FRect block, Tile & tile);
     
     //animation
-    bool load_animation(const char* path, TileAnim & anim, std::string key, int count, int duration);
+    bool load_animation(const char* path);
     std::vector<std::vector<TileAnim>> get_random_animation();
     bool create_single_block(SDL_FRect block, TileAnim & anim);
 
@@ -61,7 +63,8 @@ private:
 
     //better remove 
     void print_error(std::string base_function, std::string inner_function, std::string comment);
-
+    bool parse_anim_config(std::string path, std::map<std::string, TileAnim> & animation_library,
+      std::map<std::string, TileAnim>::iterator & it);
 
 public:
     void window_handler();

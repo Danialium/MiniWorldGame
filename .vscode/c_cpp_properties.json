@@ -14,7 +14,8 @@
                 "F:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC/14.30.30705/include",
                 "C:/Program Files (x86)/Windows Kits/10/Include/10.0.19041.0/ucrt",
                 "C:/Program Files (x86)/Windows Kits/10/Include/10.0.19041.0/shared",
-                "C:/Program Files (x86)/Windows Kits/10/Include/10.0.19041.0/um"
+                "C:/Program Files (x86)/Windows Kits/10/Include/10.0.19041.0/um",
+                "${workspaceFolder}/external/tomlplusplus/include"
             ],
             "browse": {
                 "path": [

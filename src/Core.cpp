@@ -20,8 +20,7 @@ Core::Core()
         exit(EXIT_FAILURE);
     }
 
-    animation_library["grass"];
-    if(!load_animation("../../assets/tile/grass", animation_library["grass"], "grass", 4, 1000))
+    if(!load_animation("D:/All Projects/cpp/1404/MiniWorldGame/assets/tile/grass"))
     {
         print_error("Core", "load_animation", " Exiting");
         exit(EXIT_FAILURE);
@@ -254,15 +253,16 @@ bool Core::create_single_block(SDL_FRect block, TileAnim & anim)
     return true;
 }
 
-bool Core::load_animation(const char* path, TileAnim & anim, std::string key, int count, int duration)
+bool Core::load_animation(const char* path)
 {
-    anim.anim_count = count;
-    anim.duration = duration;
-    anim.anim.resize(count);
-    for (int i = 0; i < count; i++)
+    std::map<std::string, TileAnim>::iterator it;
+    if(!parse_anim_config(path, animation_library, it))
+        return false;
+
+    for (int i = 0; i < it->second.anim_count; i++)
     {
         SDL_Surface *surface = NULL;
-        std::string image_path = (std::string)path + (std::string)"/" + key + "_" + std::to_string(i) + ".bmp";
+        std::string image_path = (std::string)path + (std::string)"/" + it->first + "_" + std::to_string(i) + ".bmp";
 
         surface = SDL_LoadBMP(image_path.c_str());
         if (!surface)
@@ -271,21 +271,18 @@ bool Core::load_animation(const char* path, TileAnim & anim, std::string key, in
             return false;
         }
 
-        anim.width = surface->w;
-        anim.height = surface->h;
+        it->second.width = surface->w;
+        it->second.height = surface->h;
 
-        anim.anim[i] = SDL_CreateTextureFromSurface(renderer, surface);
-        if (!anim.anim[i]) 
+        it->second.anim[i] = SDL_CreateTextureFromSurface(renderer, surface);
+        if (!it->second.anim[i]) 
         {
             SDL_Log("Couldn't create static texture: %s", SDL_GetError());
             return false;
         }
 
-        anim.lastUpdate = SDL_GetPerformanceCounter();
-
         SDL_DestroySurface(surface);  /* done with this, the texture has a copy of the pixels now. */
-    }
-    
+    }   
 }
 
 std::vector<std::vector<TileAnim>> Core::get_random_animation()
@@ -312,9 +309,50 @@ void Core::print_error(std::string base_function, std::string inner_function, st
     std::cout << "[E] " << base_function << " :: " << inner_function << " -> " << comment << '\n';
 }
 
+bool Core::parse_anim_config(std::string path, std::map<std::string,
+     TileAnim> & animation_library,
+      std::map<std::string, TileAnim>::iterator & it)
+{   
+    try
+    {
+        std::string file_name = path + '/' + "config.toml";
+        auto toml_read = toml::parse_file(file_name);
+        
+        std::string key = toml_read["tile"]["key"].value_or("");
+        TileAnim th_anim;
+
+        th_anim.id = 0;
+        th_anim.duration = toml_read["tile"]["duration"].value_or(100);
+        th_anim.anim_count = toml_read["tile"]["count"].value_or(1);
+        th_anim.anim.resize(th_anim.anim_count);
+        th_anim.height = th_anim.width = -1;
+        th_anim.lastUpdate = SDL_GetPerformanceCounter();
+
+        auto [_it, inserted] = animation_library.insert({key, th_anim});
+        if(!inserted)
+        {
+            std::cout << "can not add this tile." << path << '\n';
+            return false;
+        }
+
+        it = _it;
+    }
+    catch(const toml::parse_error& e)
+    {
+        std::cerr << e.description() << '\n';
+        return false;
+    }
+    
+    return true;
+}
+
 bool Core::load_tile_library()
 {
-
+    auto config = toml::parse_file("config.toml");
+    int w     = config["graphics"]["width"].value_or(1280);
+    int h     = config["graphics"]["height"].value_or(720);
+    bool full = config["graphics"]["fullscreen"].value_or(false);
+    config.clear();
     return true;
 }
 

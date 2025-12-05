@@ -25,6 +25,12 @@ Core::Core()
         print_error("Core", "load_animation", " Exiting");
         exit(EXIT_FAILURE);
     }   
+
+    if(!load_animation("D:/All Projects/cpp/1404/MiniWorldGame/assets/character/human"))
+    {
+        print_error("Core", "load_animation", " Exiting");
+        exit(EXIT_FAILURE);
+    } 
 }
 
 Core::~Core()
@@ -67,16 +73,19 @@ void Core::window_handler()
     // tile_seed = get_random_texture();
     tile_anim_seed = get_random_animation();
     SDL_Event event;
+    character_x = character_y = 0;
+    desireX = desireY = 0;
+    MovementParams moveParams;
+    moveParams.speed = 1;
+    moveParams.dst_loc[LM_X] = 0;
+    moveParams.dst_loc[LM_Y] = 0;
 
+    movementIns = std::make_unique<Movement>(moveParams);
     while (1) 
     {
         while (SDL_PollEvent(&event))
         {
-            if (event.type == SDL_EVENT_QUIT) 
-            {
-                deinit();
-                return;
-            }
+            on_event_callback(event);
         }
         
         if(is_windowSizeChanged(window))
@@ -87,7 +96,10 @@ void Core::window_handler()
             tile_anim_seed = get_random_animation();
         }
 
+        movementIns->update_movement(desireX, desireY);
+
         create_random_mesh(window, renderer);
+        update_character_location(movementIns->movementParamsIns.dst_loc[LM_X], movementIns->movementParamsIns.dst_loc[LM_Y], animation_library["human"]);
         SDL_RenderPresent(renderer);
     }
 }
@@ -101,6 +113,66 @@ bool Core::deinit()
     return true;
 }
 
+void Core::on_event_callback(SDL_Event & event)
+{
+    if (event.type == SDL_EVENT_QUIT) 
+    {
+        deinit();
+        return;
+    }
+    // else if(event.type ==SDL_EVENT_KEY_DOWN)
+    // {
+    //     /*
+    //         SDL_SCANCODE_RIGHT = 79,
+    //         SDL_SCANCODE_LEFT = 80,
+    //         SDL_SCANCODE_DOWN = 81,
+    //         SDL_SCANCODE_UP = 82,
+    //     */
+    //     int next_x = character_x , next_y = character_y;
+    //     std::cout << event.key.scancode << '\n';
+    //     switch (event.key.scancode )
+    //     {
+    //     case SDL_SCANCODE_RIGHT:
+    //         next_x ++;
+    //         break;
+    //     case SDL_SCANCODE_LEFT:
+    //         next_x --;
+    //         break;
+    //     case SDL_SCANCODE_DOWN:
+    //         next_y ++;
+    //         break;
+    //     case SDL_SCANCODE_UP:
+    //         next_y --;
+    //         break;
+        
+    //     default:
+    //         break;
+    //     }
+
+    //     character_x = std::max(window_w, 0);
+    //     character_x = std::min(window_w, next_x);
+
+    //     character_y = std::max(window_h, 0);
+    //     character_y = std::min(window_h, next_y);
+
+    //     std::cout << "SDL_EVENT_KEY_DOWN" << '\n';
+    // }
+    // else if(event.type ==SDL_EVENT_KEY_UP)
+    // {
+    //     std::cout << event.key.scancode << '\n';
+    //     std::cout << "SDL_EVENT_KEY_UP" << '\n';
+    // }
+    else if(event.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
+    {
+        desireX = event.button.x;
+        desireY = event.button.y;
+
+        movementIns->createThread();
+
+        std::cout << "SDL_EVENT_MOUSE_BUTTON_DOWN" << '\n';
+    }
+    //update_character_location()
+}
 /////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -376,3 +448,32 @@ bool Core::is_windowSizeChanged(SDL_Window* window)
     return ret;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////          Character         //////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool Core::update_character_location(int x, int y, TileAnim & character)
+{
+    if(0)//set error for wrong size 
+        return false;
+
+    int block_w = floor(window_w / (double)WORLD_SIZE), 
+        block_h = floor(window_h / (double)WORLD_SIZE);
+
+    SDL_FRect th_block = {x, y, character.width, character.height};
+
+    if(!SDL_RenderTexture(renderer, character.anim[character.id], NULL, &th_block))
+    {
+        print_error("create_single_block", "SDL_RenderTexture", SDL_GetError());
+        return false;
+    }
+
+    crntCounter = SDL_GetPerformanceCounter();
+    if(((crntCounter - character.lastUpdate) * 1000) / freq >= character.duration) //ms
+    {
+        character.lastUpdate = crntCounter;
+        character.id = (character.id + 1) % character.anim_count;
+    }      
+
+    return true;
+}

@@ -3,6 +3,9 @@
 #include "Constant.h"
 #include <SDL3/SDL.h>
 #include <toml++/toml.hpp>
+#include "Movement.h"
+#include <memory>
+
 
 struct Tile
 {
@@ -39,6 +42,7 @@ private:
     
     bool init();
     bool deinit();
+    void on_event_callback(SDL_Event & event);
 
     bool is_windowSizeChanged(SDL_Window* window);
     bool create_random_mesh(SDL_Window* window, SDL_Renderer* renderer);
@@ -59,8 +63,10 @@ private:
     std::vector<std::vector<TileAnim>> get_random_animation();
     bool create_single_block(SDL_FRect block, TileAnim & anim);
 
-
-
+    //
+    bool update_character_location(int x, int y, TileAnim & character);
+    int character_x, character_y;//TODO : temp
+    int desireX, desireY;//TODO : temp
     //better remove 
     void print_error(std::string base_function, std::string inner_function, std::string comment);
     bool parse_anim_config(std::string path, std::map<std::string, TileAnim> & animation_library,
@@ -68,6 +74,7 @@ private:
 
 public:
     void window_handler();
+    std::unique_ptr<Movement> movementIns;
 
     Core();
     ~Core();

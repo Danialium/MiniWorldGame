@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <SDL3/SDL.h>
 
 #define WORLD_SIZE 50
 
@@ -19,12 +20,15 @@ enum LocMapEnum
     LocMapEnum_count
 };
 
-class CConstant 
+class Constant 
 {
-public:
-    CConstant();
-    ~CConstant();
-    
 private:
 
+public:
+    static Uint64 freq;
+    
+    Constant();
+    ~Constant();
+   
+    static void print_error(std::string base_function, std::string inner_function, std::string comment);
 };

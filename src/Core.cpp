@@ -6,31 +6,17 @@ Core::Core()
     renderer = nullptr;
     window_w = window_h = 0;
 
-    freq = SDL_GetPerformanceFrequency();
-
     if(!init())
     {
-        print_error("Core", "init", " Exiting");
+        Constant::print_error("Core", "init", " Exiting");
         exit(EXIT_FAILURE); 
     }
 
     if(!is_windowSizeChanged(window))
     {
-        print_error("Core", "is_windowSizeChanged", " Exiting");
+        Constant::print_error("Core", "is_windowSizeChanged", " Exiting");
         exit(EXIT_FAILURE);
     }
-
-    if(!load_animation("D:/All Projects/cpp/1404/MiniWorldGame/assets/tile/grass"))
-    {
-        print_error("Core", "load_animation", " Exiting");
-        exit(EXIT_FAILURE);
-    }   
-
-    if(!load_animation("D:/All Projects/cpp/1404/MiniWorldGame/assets/character/human"))
-    {
-        print_error("Core", "load_animation", " Exiting");
-        exit(EXIT_FAILURE);
-    } 
 }
 
 Core::~Core()
@@ -71,7 +57,6 @@ void Core::window_handler()
 {
     //color_seed = get_random_seed();
     // tile_seed = get_random_texture();
-    tile_anim_seed = get_random_animation();
     SDL_Event event;
     character_x = character_y = 0;
     desireX = desireY = 0;
@@ -81,6 +66,10 @@ void Core::window_handler()
     moveParams.dst_loc[LM_Y] = 0;
 
     movementIns = std::make_unique<Movement>(moveParams);
+
+    animationIns = std::make_unique<Animation>(window, renderer);
+    animationIns->update_random_animation();
+
     while (1) 
     {
         while (SDL_PollEvent(&event))
@@ -93,13 +82,13 @@ void Core::window_handler()
             std::cout << "color seed has been changed " << '\n';
             //color_seed = get_random_seed();   
             // tile_seed = get_random_texture();
-            tile_anim_seed = get_random_animation();
+            animationIns->update_random_animation();
         }
 
         movementIns->update_movement(desireX, desireY);
 
         create_random_mesh(window, renderer);
-        update_character_location(movementIns->movementParamsIns.dst_loc[LM_X], movementIns->movementParamsIns.dst_loc[LM_Y], animation_library["human"]);
+        update_character_location(movementIns->movementParamsIns.dst_loc[LM_X], movementIns->movementParamsIns.dst_loc[LM_Y], animationIns->animation_library["human"]);
         SDL_RenderPresent(renderer);
     }
 }
@@ -173,6 +162,7 @@ void Core::on_event_callback(SDL_Event & event)
     }
     //update_character_location()
 }
+
 /////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -196,7 +186,7 @@ bool Core::create_random_mesh(SDL_Window* window, SDL_Renderer* renderer)
             // if(!create_single_block(th_block, tile_seed[x][y]))
             //     std::cout << "skip " <<  x << "," << y << '\n';
 
-            if(!create_single_block(th_block, tile_anim_seed[x][y]))
+            if(!animationIns->create_single_block(th_block, animationIns->tile_anim_seed[x][y]))
                 std::cout << "skip " <<  x << "," << y << '\n';
         }
     }
@@ -215,13 +205,13 @@ bool Core::create_single_block(SDL_Renderer* renderer, SDL_FRect block, ColorPac
 
     if(!SDL_SetRenderDrawColor(renderer, colors.r, colors.g, colors.b, colors.a))
     {
-        print_error("create_single_block", "SDL_SetRenderDrawColor", " .... ");
+        Constant::print_error("create_single_block", "SDL_SetRenderDrawColor", " .... ");
         return false;
     }
 
     if(!SDL_RenderFillRect(renderer, &block))
     {
-        print_error("create_single_block", "SDL_RenderFillRect", " .... ");
+        Constant::print_error("create_single_block", "SDL_RenderFillRect", " .... ");
         return false;
     }
 
@@ -254,7 +244,7 @@ bool Core::create_single_block(SDL_FRect block, Tile & tile)
 
     if(!SDL_RenderTexture(renderer, tile.texture, NULL, &block))
     {
-        print_error("create_single_block", "SDL_RenderTexture", SDL_GetError());
+        Constant::print_error("create_single_block", "SDL_RenderTexture", SDL_GetError());
         return false;
     }
 
@@ -301,122 +291,8 @@ std::vector<std::vector<Tile>> Core::get_random_texture()
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////        ANIMATION           //////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////
-
-bool Core::create_single_block(SDL_FRect block, TileAnim & anim)
-{
-    if(0)//set error for wrong size 
-        return false;
-
-    if(!SDL_RenderTexture(renderer, anim.anim[anim.id], NULL, &block))
-    {
-        print_error("create_single_block", "SDL_RenderTexture", SDL_GetError());
-        return false;
-    }
-
-    crntCounter = SDL_GetPerformanceCounter();
-    if(((crntCounter - anim.lastUpdate) * 1000) / freq >= anim.duration) //ms
-    {
-        anim.lastUpdate = crntCounter;
-        anim.id = (anim.id + 1) % anim.anim_count;
-    }      
-
-    return true;
-}
-
-bool Core::load_animation(const char* path)
-{
-    std::map<std::string, TileAnim>::iterator it;
-    if(!parse_anim_config(path, animation_library, it))
-        return false;
-
-    for (int i = 0; i < it->second.anim_count; i++)
-    {
-        SDL_Surface *surface = NULL;
-        std::string image_path = (std::string)path + (std::string)"/" + it->first + "_" + std::to_string(i) + ".bmp";
-
-        surface = SDL_LoadBMP(image_path.c_str());
-        if (!surface)
-        {
-            SDL_Log("Couldn't load bitmap: %s", SDL_GetError());
-            return false;
-        }
-
-        it->second.width = surface->w;
-        it->second.height = surface->h;
-
-        it->second.anim[i] = SDL_CreateTextureFromSurface(renderer, surface);
-        if (!it->second.anim[i]) 
-        {
-            SDL_Log("Couldn't create static texture: %s", SDL_GetError());
-            return false;
-        }
-
-        SDL_DestroySurface(surface);  /* done with this, the texture has a copy of the pixels now. */
-    }   
-}
-
-std::vector<std::vector<TileAnim>> Core::get_random_animation()
-{
-    std::vector<std::vector<TileAnim>> output_seed(WORLD_SIZE, std::vector<TileAnim>(WORLD_SIZE));
-    for (int x = 0; x < WORLD_SIZE; x++)
-    {
-        for (int y = 0; y < WORLD_SIZE; y++)
-        {
-            output_seed[x][y] = animation_library["grass"];
-            output_seed[x][y].id = rand() % output_seed[x][y].anim_count;
-        }
-    }
-
-    return output_seed;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////            ETC             //////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////
-
-void Core::print_error(std::string base_function, std::string inner_function, std::string comment)
-{
-    std::cout << "[E] " << base_function << " :: " << inner_function << " -> " << comment << '\n';
-}
-
-bool Core::parse_anim_config(std::string path, std::map<std::string,
-     TileAnim> & animation_library,
-      std::map<std::string, TileAnim>::iterator & it)
-{   
-    try
-    {
-        std::string file_name = path + '/' + "config.toml";
-        auto toml_read = toml::parse_file(file_name);
-        
-        std::string key = toml_read["tile"]["key"].value_or("");
-        TileAnim th_anim;
-
-        th_anim.id = 0;
-        th_anim.duration = toml_read["tile"]["duration"].value_or(100);
-        th_anim.anim_count = toml_read["tile"]["count"].value_or(1);
-        th_anim.anim.resize(th_anim.anim_count);
-        th_anim.height = th_anim.width = -1;
-        th_anim.lastUpdate = SDL_GetPerformanceCounter();
-
-        auto [_it, inserted] = animation_library.insert({key, th_anim});
-        if(!inserted)
-        {
-            std::cout << "can not add this tile." << path << '\n';
-            return false;
-        }
-
-        it = _it;
-    }
-    catch(const toml::parse_error& e)
-    {
-        std::cerr << e.description() << '\n';
-        return false;
-    }
-    
-    return true;
-}
 
 bool Core::load_tile_library()
 {
@@ -433,7 +309,7 @@ bool Core::is_windowSizeChanged(SDL_Window* window)
     int th_w = 0, th_h = 0;
     if(!SDL_GetWindowSize(window, &th_w, &th_h))
     {
-        print_error("main", "SDL_GetWindowSize", " .... ");
+        Constant::print_error("main", "SDL_GetWindowSize", " .... ");
         exit(EXIT_FAILURE);
     }
 
@@ -464,12 +340,12 @@ bool Core::update_character_location(int x, int y, TileAnim & character)
 
     if(!SDL_RenderTexture(renderer, character.anim[character.id], NULL, &th_block))
     {
-        print_error("create_single_block", "SDL_RenderTexture", SDL_GetError());
+        Constant::print_error("create_single_block", "SDL_RenderTexture", SDL_GetError());
         return false;
     }
 
-    crntCounter = SDL_GetPerformanceCounter();
-    if(((crntCounter - character.lastUpdate) * 1000) / freq >= character.duration) //ms
+    Uint8 crntCounter = SDL_GetPerformanceCounter();
+    if(((crntCounter - character.lastUpdate) * 1000) / Constant::freq >= character.duration) //ms
     {
         character.lastUpdate = crntCounter;
         character.id = (character.id + 1) % character.anim_count;

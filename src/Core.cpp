@@ -12,9 +12,9 @@ Core::Core()
         exit(EXIT_FAILURE); 
     }
 
-    if(!is_windowSizeChanged(window))
+    if(!updateWindowSize(window))
     {
-        Constant::print_error("Core", "is_windowSizeChanged", " Exiting");
+        Constant::print_error("Core", "updateWindowSize", " Exiting");
         exit(EXIT_FAILURE);
     }
 }
@@ -70,19 +70,29 @@ void Core::window_handler()
     animationIns = std::make_unique<Animation>(window, renderer);
     animationIns->update_random_animation();
 
+
+    //////////////////////////
+    int block_w = (int)floor(window_w / (double)WORLD_SIZE), 
+        block_h = (int)floor(window_h / (double)WORLD_SIZE);
+
+    ObjectParams obj_params;
+    obj_params.block_width = block_w;
+    obj_params.block_height = block_h;
+    obj_params.max_area = WORLD_SIZE * WORLD_SIZE / 4;
+    obj_params.min_area = WORLD_SIZE * WORLD_SIZE / 16;
+    obj_params.x_center = (WORLD_SIZE / 2) * block_w;
+    obj_params.y_center = (WORLD_SIZE / 2) * block_h;
+    
+    mountain_object = animationIns->create_object(animationIns->animation_library["mountain"], obj_params);
+
+    //////////////////////////
+
+
     while (1) 
     {
         while (SDL_PollEvent(&event))
         {
             on_event_callback(event);
-        }
-        
-        if(is_windowSizeChanged(window))
-        {
-            std::cout << "color seed has been changed " << '\n';
-            //color_seed = get_random_seed();   
-            // tile_seed = get_random_texture();
-            animationIns->update_random_animation();
         }
 
         movementIns->update_movement(desireX, desireY);
@@ -107,6 +117,7 @@ void Core::on_event_callback(SDL_Event & event)
     if (event.type == SDL_EVENT_QUIT) 
     {
         deinit();
+        exit(EXIT_SUCCESS);
         return;
     }
     // else if(event.type ==SDL_EVENT_KEY_DOWN)
@@ -151,6 +162,33 @@ void Core::on_event_callback(SDL_Event & event)
     //     std::cout << event.key.scancode << '\n';
     //     std::cout << "SDL_EVENT_KEY_UP" << '\n';
     // }
+    else if (event.type == SDL_EVENT_WINDOW_RESIZED)
+    {
+        std::cout << "color seed has been changed " << '\n';
+       
+        //FIXME : remove this setion after full size activated
+        updateWindowSize(window);    
+        window_w = window_h = std::max(window_w, window_h);
+        SDL_SetWindowSize(window, window_w, window_h);
+        updateWindowSize(window);    
+
+        //color_seed = get_random_seed();   
+        // tile_seed = get_random_texture();
+        animationIns->update_random_animation();
+        
+        int block_w = (int)floor(window_w / (double)WORLD_SIZE),
+        block_h = (int)floor(window_h / (double)WORLD_SIZE);
+
+        ObjectParams obj_params;
+        obj_params.block_width = block_w;
+        obj_params.block_height = block_h;
+        obj_params.max_area = WORLD_SIZE * WORLD_SIZE / 4;
+        obj_params.min_area = WORLD_SIZE * WORLD_SIZE / 16;
+        obj_params.x_center = (WORLD_SIZE / 2) * block_w;
+        obj_params.y_center = (WORLD_SIZE / 2) * block_h;
+
+        mountain_object = animationIns->create_object(animationIns->animation_library["mountain"], obj_params);
+    }
     else if(event.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
     {
         desireX = event.button.x;
@@ -171,14 +209,36 @@ bool Core::create_random_mesh(SDL_Window* window, SDL_Renderer* renderer)
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);  
     SDL_RenderClear(renderer);
 
-    int block_w = floor(window_w / (double)WORLD_SIZE), 
-        block_h = floor(window_h / (double)WORLD_SIZE);
+    int block_w = (int)floor(window_w / (double)WORLD_SIZE), 
+        block_h = (int)floor(window_h / (double)WORLD_SIZE);
 
     for (int x = 0; x < WORLD_SIZE; x++)
     {
         for (int y = 0; y < WORLD_SIZE; y++)
         {
-            SDL_FRect th_block = {x * block_w, y * block_h, block_w, block_h}; //x, y, w, h
+            if (mountain_object.location.size() > 0)
+            {
+                bool is_found = false;
+                for (auto & loc : mountain_object.location)
+                {
+                    int loc_x = (int)(loc.x / block_w);
+                    int loc_y = (int)(loc.y / block_h);
+                    
+                    if (x == loc_x && y == loc_y)
+                    {
+                        if(!animationIns->create_single_block(loc, mountain_object.anim))
+                            std::cout << "skip object " <<  x << "," << y << '\n';
+                        is_found = true;
+                        break;
+                    }
+                }
+
+                if (is_found)
+                    continue;
+            }
+            
+            
+            SDL_FRect th_block = {(float)x * block_w, (float)y * block_h, (float)block_w, (float)block_h}; //x, y, w, h
                         
             // if(!create_single_block(renderer, th_block, color_seed[x][y]))
             //     std::cout << "skip " <<  x << "," << y << '\n';
@@ -304,24 +364,19 @@ bool Core::load_tile_library()
     return true;
 }
 
-bool Core::is_windowSizeChanged(SDL_Window* window)
+bool Core::updateWindowSize(SDL_Window* window)
 {
     int th_w = 0, th_h = 0;
     if(!SDL_GetWindowSize(window, &th_w, &th_h))
     {
         Constant::print_error("main", "SDL_GetWindowSize", " .... ");
-        exit(EXIT_FAILURE);
+        return false;
     }
 
-    bool ret = false;
-    if(window_w != th_w || window_h != th_h)
-    {
-        ret = true;
-        window_w = th_w;
-        window_h = th_h;
-    }
+    window_w = th_w;
+    window_h = th_h;
 
-    return ret;
+    return true;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -336,7 +391,7 @@ bool Core::update_character_location(int x, int y, TileAnim & character)
     int block_w = floor(window_w / (double)WORLD_SIZE), 
         block_h = floor(window_h / (double)WORLD_SIZE);
 
-    SDL_FRect th_block = {x, y, character.width, character.height};
+    SDL_FRect th_block = {x, y, block_w, block_h};
 
     if(!SDL_RenderTexture(renderer, character.anim[character.id], NULL, &th_block))
     {

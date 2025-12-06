@@ -26,11 +26,14 @@ private:
 
     std::unique_ptr<Animation> animationIns;
     
+    //delete
+    StaticObject mountain_object;
+
     bool init();
     bool deinit();
     void on_event_callback(SDL_Event & event);
 
-    bool is_windowSizeChanged(SDL_Window* window);
+    bool updateWindowSize(SDL_Window* window);
     bool create_random_mesh(SDL_Window* window, SDL_Renderer* renderer);
     
     bool load_tile_library();

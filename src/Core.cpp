@@ -50,6 +50,8 @@ bool Core::init()
         return false;
     }
 
+    objectIns = std::make_unique<Object>();
+
     return true;
 }
 
@@ -83,7 +85,7 @@ void Core::window_handler()
     obj_params.x_center = (WORLD_SIZE / 2) * block_w;
     obj_params.y_center = (WORLD_SIZE / 2) * block_h;
     
-    mountain_object = animationIns->create_object(animationIns->animation_library["mountain"], obj_params);
+    mountain_object = objectIns->create(animationIns->animation_library["mountain"], obj_params);
 
     //////////////////////////
 
@@ -164,7 +166,7 @@ void Core::on_event_callback(SDL_Event & event)
     // }
     else if (event.type == SDL_EVENT_WINDOW_RESIZED)
     {
-        std::cout << "color seed has been changed " << '\n';
+        std::cout << "color seed has been changed " << '\n';    
        
         //FIXME : remove this setion after full size activated
         updateWindowSize(window);    
@@ -187,7 +189,7 @@ void Core::on_event_callback(SDL_Event & event)
         obj_params.x_center = (WORLD_SIZE / 2) * block_w;
         obj_params.y_center = (WORLD_SIZE / 2) * block_h;
 
-        mountain_object = animationIns->create_object(animationIns->animation_library["mountain"], obj_params);
+        mountain_object = objectIns->create(animationIns->animation_library["mountain"], obj_params);
     }
     else if(event.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
     {

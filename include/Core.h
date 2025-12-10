@@ -5,6 +5,7 @@
 #include <toml++/toml.hpp>
 #include "Movement.h"
 #include "Animation.h"
+#include "Object.h"
 #include <memory>
 
 struct Tile
@@ -28,7 +29,9 @@ private:
     
     //delete
     StaticObject mountain_object;
-
+    
+    std::unique_ptr<Object> objectIns;
+    
     bool init();
     bool deinit();
     void on_event_callback(SDL_Event & event);

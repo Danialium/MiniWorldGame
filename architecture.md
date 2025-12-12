@@ -1,0 +1,36 @@
+```
+└── 📁MiniWorldGame
+    └── 📁src
+        └── 📁engine
+            └── 📁core
+                └── 📁WindowManager
+                    ├── CMakeLists.txt
+                    ├── WindowManager.cpp
+                    ├── WindowManager.h
+                ├── CMakeLists.txt
+            ├── CMakeLists.txt
+        └── 📁modules
+            └── 📁Animation
+                ├── Animation.cpp
+                ├── Animation.h
+                ├── CMakeLists.txt
+            └── 📁Movement
+                ├── CMakeLists.txt
+                ├── Movement.cpp
+                ├── Movement.h
+            └── 📁Object
+                ├── CMakeLists.txt
+                ├── Object.cpp
+                ├── Object.h
+            ├── CMakeLists.txt
+        └── 📁utils
+            ├── CMakeLists.txt
+            ├── Constant.cpp
+            ├── Constant.h
+        ├── CMakeLists.txt
+        ├── main.cpp
+    ├── .gitignore
+    ├── CMakeLists.txt
+    ├── LICENSE
+    └── README.md
+```

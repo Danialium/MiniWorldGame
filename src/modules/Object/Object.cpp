@@ -17,7 +17,7 @@ Object::Object()
 
 Object::~Object()
 {
-    
+
 }
 
 StaticObject Object::create(TileAnim & anim, ObjectParams params)
@@ -73,5 +73,5 @@ StaticObject Object::create(TileAnim & anim, ObjectParams params)
 
 void Object::create_object_boarder(StaticObject & _obj)
 {
-
+    
 }

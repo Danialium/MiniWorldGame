@@ -4,7 +4,7 @@
 #include <vector>
 #include <map>
 
-#include "Animation.h"
+#include <Animation.h>
 
 struct ObjectParams
 {

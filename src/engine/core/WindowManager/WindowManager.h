@@ -3,8 +3,8 @@
 #include "Constant.h"
 #include <SDL3/SDL.h>
 #include <toml++/toml.hpp>
-#include "Movement.h"
 #include "Animation.h"
+#include "Movement.h"
 #include "Object.h"
 #include <memory>
 
@@ -14,7 +14,7 @@ struct Tile
     int width, height;
 };
 
-class Core
+class WindowManager
 {
 private: 
     int window_w, window_h;
@@ -59,6 +59,6 @@ public:
     void window_handler();
     std::unique_ptr<Movement> movementIns;
 
-    Core();
-    ~Core();
+    WindowManager();
+    ~WindowManager();
 };

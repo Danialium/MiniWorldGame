@@ -1,6 +1,6 @@
-#include "Core.h"
+#include "WindowManager.h"
 
-Core::Core()
+WindowManager::WindowManager()
 {
     window = nullptr;
     renderer = nullptr;
@@ -8,18 +8,18 @@ Core::Core()
 
     if(!init())
     {
-        Constant::print_error("Core", "init", " Exiting");
+        Constant::print_error("WindowManager", "init", " Exiting");
         exit(EXIT_FAILURE); 
     }
 
     if(!updateWindowSize(window))
     {
-        Constant::print_error("Core", "updateWindowSize", " Exiting");
+        Constant::print_error("WindowManager", "updateWindowSize", " Exiting");
         exit(EXIT_FAILURE);
     }
 }
 
-Core::~Core()
+WindowManager::~WindowManager()
 {
     window = nullptr;
     renderer = nullptr;
@@ -27,7 +27,7 @@ Core::~Core()
 
 //////////////////////////////////////////
 
-bool Core::init()
+bool WindowManager::init()
 {
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         std::cerr << "SDL_Init failed: " << SDL_GetError() << "\n";
@@ -55,7 +55,7 @@ bool Core::init()
     return true;
 }
 
-void Core::window_handler()
+void WindowManager::window_handler()
 {
     //color_seed = get_random_seed();
     // tile_seed = get_random_texture();
@@ -105,7 +105,7 @@ void Core::window_handler()
     }
 }
 
-bool Core::deinit()
+bool WindowManager::deinit()
 {
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
@@ -114,7 +114,7 @@ bool Core::deinit()
     return true;
 }
 
-void Core::on_event_callback(SDL_Event & event)
+void WindowManager::on_event_callback(SDL_Event & event)
 {
     if (event.type == SDL_EVENT_QUIT) 
     {
@@ -206,7 +206,7 @@ void Core::on_event_callback(SDL_Event & event)
 /////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool Core::create_random_mesh(SDL_Window* window, SDL_Renderer* renderer)
+bool WindowManager::create_random_mesh(SDL_Window* window, SDL_Renderer* renderer)
 {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);  
     SDL_RenderClear(renderer);
@@ -260,7 +260,7 @@ bool Core::create_random_mesh(SDL_Window* window, SDL_Renderer* renderer)
 ///////////////////////////////          Color             //////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool Core::create_single_block(SDL_Renderer* renderer, SDL_FRect block, ColorPack colors)
+bool WindowManager::create_single_block(SDL_Renderer* renderer, SDL_FRect block, ColorPack colors)
 {
     if(0)//set error for wrong size 
         return false;
@@ -280,7 +280,7 @@ bool Core::create_single_block(SDL_Renderer* renderer, SDL_FRect block, ColorPac
     return true;
 }
 
-std::vector<std::vector<ColorPack>> Core::get_random_seed()
+std::vector<std::vector<ColorPack>> WindowManager::get_random_seed()
 {
     std::vector<std::vector<ColorPack>> output_seed(WORLD_SIZE, std::vector<ColorPack>(WORLD_SIZE));
     for (int x = 0; x < WORLD_SIZE; x++)
@@ -299,7 +299,7 @@ std::vector<std::vector<ColorPack>> Core::get_random_seed()
 ///////////////////////////////         Texture            //////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool Core::create_single_block(SDL_FRect block, Tile & tile)
+bool WindowManager::create_single_block(SDL_FRect block, Tile & tile)
 {
     if(0)//set error for wrong size 
         return false;
@@ -313,7 +313,7 @@ bool Core::create_single_block(SDL_FRect block, Tile & tile)
     return true;
 }
 
-bool Core::load_Tile(const char* path, Tile & tile)
+bool WindowManager::load_Tile(const char* path, Tile & tile)
 {
     SDL_Surface *surface = NULL;
     surface = SDL_LoadBMP(path);
@@ -338,7 +338,7 @@ bool Core::load_Tile(const char* path, Tile & tile)
     return true;
 }
 
-std::vector<std::vector<Tile>> Core::get_random_texture()
+std::vector<std::vector<Tile>> WindowManager::get_random_texture()
 {
     std::vector<std::vector<Tile>> output_seed(WORLD_SIZE, std::vector<Tile>(WORLD_SIZE));
     for (int x = 0; x < WORLD_SIZE; x++)
@@ -356,7 +356,7 @@ std::vector<std::vector<Tile>> Core::get_random_texture()
 ///////////////////////////////            ETC             //////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool Core::load_tile_library()
+bool WindowManager::load_tile_library()
 {
     auto config = toml::parse_file("config.toml");
     int w     = config["graphics"]["width"].value_or(1280);
@@ -366,7 +366,7 @@ bool Core::load_tile_library()
     return true;
 }
 
-bool Core::updateWindowSize(SDL_Window* window)
+bool WindowManager::updateWindowSize(SDL_Window* window)
 {
     int th_w = 0, th_h = 0;
     if(!SDL_GetWindowSize(window, &th_w, &th_h))
@@ -385,7 +385,7 @@ bool Core::updateWindowSize(SDL_Window* window)
 ///////////////////////////////          Character         //////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool Core::update_character_location(int x, int y, TileAnim & character)
+bool WindowManager::update_character_location(int x, int y, TileAnim & character)
 {
     if(0)//set error for wrong size 
         return false;

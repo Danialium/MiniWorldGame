@@ -8,19 +8,19 @@ Animation::Animation(SDL_Window* in_window, SDL_Renderer* in_renderer)
     //TODO : clean this section
     if(!load_animation("D:/All Projects/cpp/1404/MiniWorldGame/assets/tile/grass"))
     {
-        Constant::print_error("Core", "load_animation", " Exiting");
+        Constant::print_error("WindowManager", "load_animation", " Exiting");
         exit(EXIT_FAILURE);
     }   
 
     if(!load_animation("D:/All Projects/cpp/1404/MiniWorldGame/assets/character/human"))
     {
-        Constant::print_error("Core", "load_animation", " Exiting");
+        Constant::print_error("WindowManager", "load_animation", " Exiting");
         exit(EXIT_FAILURE);
     } 
 
     if(!load_animation("D:/All Projects/cpp/1404/MiniWorldGame/assets/tile/mountain"))
     {
-        Constant::print_error("Core", "load_animation", " Exiting");
+        Constant::print_error("WindowManager", "load_animation", " Exiting");
         exit(EXIT_FAILURE);
     } 
 
